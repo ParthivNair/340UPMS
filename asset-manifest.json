@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/upms/static/css/main.7df89c8e.css",
+    "main.js": "/upms/static/js/main.ea6bb2ea.js",
+    "static/js/488.fd26b837.chunk.js": "/upms/static/js/488.fd26b837.chunk.js",
+    "index.html": "/upms/index.html",
+    "main.7df89c8e.css.map": "/upms/static/css/main.7df89c8e.css.map",
+    "main.ea6bb2ea.js.map": "/upms/static/js/main.ea6bb2ea.js.map",
+    "488.fd26b837.chunk.js.map": "/upms/static/js/488.fd26b837.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.7df89c8e.css",
+    "static/js/main.ea6bb2ea.js"
+  ]
+}

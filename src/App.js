@@ -17,15 +17,15 @@ function App() {
         <Navbar />
         <div className="main-content">
           <Routes>
-            <Route path="/340UPMS/" element={<Dashboard />} />
-            <Route path="/340UPMS/properties/*" element={<Properties />} />
-            <Route path="/340UPMS/units" element={<Units />} />
-            <Route path="/340UPMS/tenants" element={<Tenants />} />
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/properties/*" element={<Properties />} />
+            <Route path="/units" element={<Units />} />
+            <Route path="/tenants" element={<Tenants />} />
             <Route
-              path="/340UPMS/maintenance-requests"
+              path="/maintenance-requests"
               element={<MaintenanceRequests />}
             />
-            <Route path="/340UPMS/payments" element={<Payments />} />
+            <Route path="/payments" element={<Payments />} />
           </Routes>
         </div>
       </div>

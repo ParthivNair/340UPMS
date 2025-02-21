@@ -7,7 +7,9 @@ import Dashboard from "./components/Dashboard";
 import Properties from "./components/Properties";
 import Units from "./components/Units";
 import Tenants from "./components/Tenants";
+import Leases from "./components/Leases";
 import MaintenanceRequests from "./components/MaintenanceRequests";
+import UnitMaintenanceRequests from "./components/UnitMaintenanceRequests";
 import Payments from "./components/Payments";
 
 function App() {
@@ -25,7 +27,12 @@ function App() {
               path="/maintenance-requests"
               element={<MaintenanceRequests />}
             />
+            <Route path="/leases" element={<Leases />} />
             <Route path="/payments" element={<Payments />} />
+            <Route
+              path="/unit-maintenance-requests"
+              element={<UnitMaintenanceRequests />}
+            />
           </Routes>
         </div>
       </div>

@@ -21,7 +21,9 @@ const Navbar = () => {
         <Link to="/units">Units</Link>
         <Link to="/tenants">Tenants</Link>
         <Link to="/maintenance-requests">Maintenance</Link>
+        <Link to="/leases">Leases</Link>
         <Link to="/payments">Payments</Link>
+        <Link to="/unit-maintenance-requests">UnitMaintenanceRequests</Link>
       </nav>
     </div>
   );

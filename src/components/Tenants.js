@@ -1,59 +1,53 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import Modal from "../common/Modal";
 import UniversalForm from "../common/UniversalForm";
 
-const initialTenants = [
-  {
-    tenantID: 1,
-    firstName: "Daniel",
-    lastName: "Johnson",
-    phoneNumber: "541-123-4567",
-    email: "dajohn@example.com",
-    unitID: 1,
-  },
-  {
-    tenantID: 2,
-    firstName: "Tyrell",
-    lastName: "Smith",
-    phoneNumber: "541-234-5678",
-    email: "tysmit@example.com",
-    unitID: 3,
-  },
-];
+const API_URL = "http://localhost:8000/tenants/";
 
 const Tenants = () => {
-  const [tenants, setTenants] = useState(initialTenants);
+  const [tenants, setTenants] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingTenant, setEditingTenant] = useState(null);
 
   const tenantFields = [
-    { name: "firstName", label: "First Name", type: "text", required: true },
-    { name: "lastName", label: "Last Name", type: "text", required: true },
+    { name: "first_name", label: "First Name", type: "text", required: true },
+    { name: "last_name", label: "Last Name", type: "text", required: true },
     {
-      name: "phoneNumber",
+      name: "phone_number",
       label: "Phone Number",
       type: "text",
       required: true,
     },
     { name: "email", label: "Email", type: "email", required: true },
-    { name: "unitID", label: "Unit ID", type: "number", required: true },
   ];
 
-  const handleAddOrUpdateTenant = (formData) => {
-    if (editingTenant) {
-      setTenants(
-        tenants.map((tenant) =>
-          tenant.tenantID === editingTenant.tenantID
-            ? { ...tenant, ...formData }
-            : tenant
-        )
-      );
-    } else {
-      const newTenant = { tenantID: Date.now(), ...formData };
-      setTenants([...tenants, newTenant]);
+  useEffect(() => {
+    fetchTenants();
+  }, []);
+
+  const fetchTenants = async () => {
+    try {
+      const response = await axios.get(API_URL);
+      setTenants(response.data);
+    } catch (error) {
+      console.error("Error fetching tenants:", error);
     }
-    setShowModal(false);
-    setEditingTenant(null);
+  };
+
+  const handleAddOrUpdateTenant = async (formData) => {
+    try {
+      if (editingTenant) {
+        await axios.put(`${API_URL}${editingTenant.tenant_id}`, formData);
+      } else {
+        await axios.post(API_URL, formData);
+      }
+      setShowModal(false);
+      setEditingTenant(null);
+      fetchTenants(); // Refresh tenant list
+    } catch (error) {
+      console.error("Error saving tenant:", error);
+    }
   };
 
   const handleEditTenant = (tenant) => {
@@ -61,8 +55,13 @@ const Tenants = () => {
     setShowModal(true);
   };
 
-  const handleDeleteTenant = (id) => {
-    setTenants(tenants.filter((tenant) => tenant.tenantID !== id));
+  const handleDeleteTenant = async (tenant_id) => {
+    try {
+      await axios.delete(`${API_URL}${tenant_id}`);
+      fetchTenants();
+    } catch (error) {
+      console.error("Error deleting tenant:", error);
+    }
   };
 
   return (
@@ -92,24 +91,22 @@ const Tenants = () => {
       <table className="table">
         <thead>
           <tr>
-            <th>Tenant ID</th>
-            <th>Name</th>
-            <th>Phone</th>
+            <th>ID</th>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Phone Number</th>
             <th>Email</th>
-            <th>Unit ID</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {tenants.map((tenant) => (
-            <tr key={tenant.tenantID}>
-              <td>{tenant.tenantID}</td>
-              <td>
-                {tenant.firstName} {tenant.lastName}
-              </td>
-              <td>{tenant.phoneNumber}</td>
+            <tr key={tenant.tenant_id}>
+              <td>{tenant.tenant_id}</td>
+              <td>{tenant.first_name}</td>
+              <td>{tenant.last_name}</td>
+              <td>{tenant.phone_number}</td>
               <td>{tenant.email}</td>
-              <td>{tenant.unitID}</td>
               <td>
                 <button
                   className="edit-button"
@@ -119,7 +116,7 @@ const Tenants = () => {
                 </button>
                 <button
                   className="delete-button"
-                  onClick={() => handleDeleteTenant(tenant.tenantID)}
+                  onClick={() => handleDeleteTenant(tenant.tenant_id)}
                 >
                   Delete
                 </button>

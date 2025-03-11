@@ -3,7 +3,7 @@ import axios from "axios";
 import Modal from "../common/Modal";
 import UniversalForm from "../common/UniversalForm";
 
-const API_URL = "http://localhost:8000/tenants/";
+const API_URL = "http://classwork.engr.oregonstate.edu:4994/tenants/";
 
 const Tenants = () => {
   const [tenants, setTenants] = useState([]);
@@ -11,10 +11,10 @@ const Tenants = () => {
   const [editingTenant, setEditingTenant] = useState(null);
 
   const tenantFields = [
-    { name: "first_name", label: "First Name", type: "text", required: true },
-    { name: "last_name", label: "Last Name", type: "text", required: true },
+    { name: "firstName", label: "First Name", type: "text", required: true },
+    { name: "lastName", label: "Last Name", type: "text", required: true },
     {
-      name: "phone_number",
+      name: "phoneNumber",
       label: "Phone Number",
       type: "text",
       required: true,
@@ -29,6 +29,7 @@ const Tenants = () => {
   const fetchTenants = async () => {
     try {
       const response = await axios.get(API_URL);
+      console.log(response.data);
       setTenants(response.data);
     } catch (error) {
       console.error("Error fetching tenants:", error);
@@ -38,7 +39,7 @@ const Tenants = () => {
   const handleAddOrUpdateTenant = async (formData) => {
     try {
       if (editingTenant) {
-        await axios.put(`${API_URL}${editingTenant.tenant_id}`, formData);
+        await axios.put(`${API_URL}${editingTenant.tenantID}`, formData);
       } else {
         await axios.post(API_URL, formData);
       }
@@ -57,6 +58,7 @@ const Tenants = () => {
 
   const handleDeleteTenant = async (tenant_id) => {
     try {
+      console.log(`${API_URL}${tenant_id}`);
       await axios.delete(`${API_URL}${tenant_id}`);
       fetchTenants();
     } catch (error) {
@@ -101,11 +103,11 @@ const Tenants = () => {
         </thead>
         <tbody>
           {tenants.map((tenant) => (
-            <tr key={tenant.tenant_id}>
-              <td>{tenant.tenant_id}</td>
-              <td>{tenant.first_name}</td>
-              <td>{tenant.last_name}</td>
-              <td>{tenant.phone_number}</td>
+            <tr key={tenant.tenantID}>
+              <td>{tenant.tenantID}</td>
+              <td>{tenant.firstName}</td>
+              <td>{tenant.lastName}</td>
+              <td>{tenant.phoneNumber}</td>
               <td>{tenant.email}</td>
               <td>
                 <button
@@ -116,7 +118,7 @@ const Tenants = () => {
                 </button>
                 <button
                   className="delete-button"
-                  onClick={() => handleDeleteTenant(tenant.tenant_id)}
+                  onClick={() => handleDeleteTenant(tenant.tenantID)}
                 >
                   Delete
                 </button>

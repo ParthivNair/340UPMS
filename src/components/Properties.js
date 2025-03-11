@@ -1,63 +1,50 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import Modal from "../common/Modal";
 import UniversalForm from "../common/UniversalForm";
 
-const initialProperties = [
-  {
-    propertyID: 1,
-    address: "123 Oak St",
-    city: "Eugene",
-    state: "OR",
-    zipCode: "97401",
-    propertyValue: 250000.0,
-  },
-  {
-    propertyID: 2,
-    address: "456 Maple Ave",
-    city: "Corvallis",
-    state: "OR",
-    zipCode: "97330",
-    propertyValue: 320000.0,
-  },
-];
+const API_URL = "http://classwork.engr.oregonstate.edu:4994/properties/";
 
 const Properties = () => {
-  const [properties, setProperties] = useState(initialProperties);
+  const [properties, setProperties] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingProperty, setEditingProperty] = useState(null);
 
+  // Updated fields to match backend: propertyName, address, city, state, zipCode
   const propertyFields = [
     { name: "address", label: "Address", type: "text", required: true },
     { name: "city", label: "City", type: "text", required: true },
     { name: "state", label: "State", type: "text", required: true },
     { name: "zipCode", label: "Zip Code", type: "text", required: true },
-    {
-      name: "propertyValue",
-      label: "Property Value",
-      type: "number",
-      required: true,
-    },
+    { name: "propertyValue", label: "Value", type: "number", required: true },
   ];
 
-  const handleAddOrUpdateProperty = (formData) => {
-    if (editingProperty) {
-      setProperties(
-        properties.map((prop) =>
-          prop.propertyID === editingProperty.propertyID
-            ? { ...prop, ...formData }
-            : prop
-        )
-      );
-    } else {
-      const newProperty = {
-        propertyID: Date.now(),
-        ...formData,
-        propertyValue: parseFloat(formData.propertyValue),
-      };
-      setProperties([...properties, newProperty]);
+  const fetchProperties = async () => {
+    try {
+      const response = await axios.get(API_URL);
+      setProperties(response.data);
+    } catch (error) {
+      console.error("Error fetching properties:", error);
     }
-    setShowModal(false);
-    setEditingProperty(null);
+  };
+
+  useEffect(() => {
+    fetchProperties();
+  }, []);
+
+  const handleAddOrUpdateProperty = async (formData) => {
+    try {
+      if (editingProperty) {
+        await axios.put(`${API_URL}${editingProperty.propertyID}`, formData);
+      } else {
+        await axios.post(API_URL, formData);
+      }
+      setShowModal(false);
+      setEditingProperty(null);
+      fetchProperties();
+    } catch (error) {
+      console.error("Error saving property:", error);
+    }
   };
 
   const handleEditProperty = (property) => {
@@ -65,8 +52,13 @@ const Properties = () => {
     setShowModal(true);
   };
 
-  const handleDeleteProperty = (id) => {
-    setProperties(properties.filter((prop) => prop.propertyID !== id));
+  const handleDeleteProperty = async (propertyID) => {
+    try {
+      await axios.delete(`${API_URL}${propertyID}`);
+      fetchProperties();
+    } catch (error) {
+      console.error("Error deleting property:", error);
+    }
   };
 
   return (
@@ -81,26 +73,22 @@ const Properties = () => {
       >
         Add Property
       </button>
-
       <Modal isOpen={showModal} onClose={() => setShowModal(false)}>
-        <h2 style={{ marginBottom: "10px" }}>
-          {editingProperty ? "Edit Property" : "New Property"}
-        </h2>
+        <h2>{editingProperty ? "Edit Property" : "New Property"}</h2>
         <UniversalForm
           fields={propertyFields}
           onSubmit={handleAddOrUpdateProperty}
           initialData={editingProperty}
         />
       </Modal>
-
       <table className="table">
         <thead>
           <tr>
-            <th>ID</th>
+            <th>Property ID</th>
             <th>Address</th>
             <th>City</th>
             <th>State</th>
-            <th>ZipCode</th>
+            <th>Zip Code</th>
             <th>Value</th>
             <th>Actions</th>
           </tr>
@@ -113,7 +101,7 @@ const Properties = () => {
               <td>{prop.city}</td>
               <td>{prop.state}</td>
               <td>{prop.zipCode}</td>
-              <td>${prop.propertyValue}</td>
+              <td>{prop.propertyValue}</td>
               <td>
                 <button
                   className="edit-button"

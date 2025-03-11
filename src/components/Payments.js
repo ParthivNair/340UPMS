@@ -1,31 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import Modal from "../common/Modal";
 import UniversalForm from "../common/UniversalForm";
 
-const initialPayments = [
-  {
-    paymentID: 1,
-    tenantID: 1,
-    leaseID: 1,
-    amount: 1200.0,
-    paymentDate: "2025-02-01 08:00:00",
-    paymentMethod: "Credit Card",
-  },
-  {
-    paymentID: 2,
-    tenantID: 2,
-    leaseID: 2,
-    amount: 900.0,
-    paymentDate: "2025-02-01 08:30:00",
-    paymentMethod: "Bank Transfer",
-  },
-];
+const API_URL = "http://classwork.engr.oregonstate.edu:4994/payments/";
 
 const Payments = () => {
-  const [payments, setPayments] = useState(initialPayments);
+  const [payments, setPayments] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingPayment, setEditingPayment] = useState(null);
 
+  // Fields updated to match backend: leaseID, amount, paymentDate, paymentMethod
   const paymentFields = [
     { name: "tenantID", label: "Tenant ID", type: "number", required: true },
     { name: "leaseID", label: "Lease ID", type: "number", required: true },
@@ -33,7 +18,7 @@ const Payments = () => {
     {
       name: "paymentDate",
       label: "Payment Date",
-      type: "text",
+      type: "date",
       required: true,
     },
     {
@@ -44,21 +29,32 @@ const Payments = () => {
     },
   ];
 
-  const handleAddOrUpdatePayment = (formData) => {
-    if (editingPayment) {
-      setPayments(
-        payments.map((payment) =>
-          payment.paymentID === editingPayment.paymentID
-            ? { ...payment, ...formData }
-            : payment
-        )
-      );
-    } else {
-      const newPayment = { paymentID: Date.now(), ...formData };
-      setPayments([...payments, newPayment]);
+  const fetchPayments = async () => {
+    try {
+      const response = await axios.get(API_URL);
+      setPayments(response.data);
+    } catch (error) {
+      console.error("Error fetching payments:", error);
     }
-    setShowModal(false);
-    setEditingPayment(null);
+  };
+
+  useEffect(() => {
+    fetchPayments();
+  }, []);
+
+  const handleAddOrUpdatePayment = async (formData) => {
+    try {
+      if (editingPayment) {
+        await axios.put(`${API_URL}${editingPayment.paymentID}`, formData);
+      } else {
+        await axios.post(API_URL, formData);
+      }
+      setShowModal(false);
+      setEditingPayment(null);
+      fetchPayments();
+    } catch (error) {
+      console.error("Error saving payment:", error);
+    }
   };
 
   const handleEditPayment = (payment) => {
@@ -66,8 +62,13 @@ const Payments = () => {
     setShowModal(true);
   };
 
-  const handleDeletePayment = (id) => {
-    setPayments(payments.filter((payment) => payment.paymentID !== id));
+  const handleDeletePayment = async (paymentID) => {
+    try {
+      await axios.delete(`${API_URL}${paymentID}`);
+      fetchPayments();
+    } catch (error) {
+      console.error("Error deleting payment:", error);
+    }
   };
 
   return (
@@ -82,18 +83,14 @@ const Payments = () => {
       >
         Add Payment
       </button>
-
       <Modal isOpen={showModal} onClose={() => setShowModal(false)}>
-        <h2 style={{ marginBottom: "10px" }}>
-          {editingPayment ? "Edit Payment" : "New Payment"}
-        </h2>
+        <h2>{editingPayment ? "Edit Payment" : "New Payment"}</h2>
         <UniversalForm
           fields={paymentFields}
           onSubmit={handleAddOrUpdatePayment}
           initialData={editingPayment}
         />
       </Modal>
-
       <table className="table">
         <thead>
           <tr>
@@ -112,7 +109,7 @@ const Payments = () => {
               <td>{payment.paymentID}</td>
               <td>{payment.tenantID}</td>
               <td>{payment.leaseID}</td>
-              <td>${payment.amount}</td>
+              <td>{payment.amount}</td>
               <td>{payment.paymentDate}</td>
               <td>{payment.paymentMethod}</td>
               <td>

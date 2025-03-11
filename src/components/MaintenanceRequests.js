@@ -1,61 +1,60 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import Modal from "../common/Modal";
 import UniversalForm from "../common/UniversalForm";
 
-const initialRequests = [
-  {
-    requestID: 1,
-    description: "Leaky faucet in kitchen",
-    status: "Pending",
-    submissionDate: "2025-01-15 10:00:00",
-    completionDate: null,
-  },
-  {
-    requestID: 2,
-    description: "Broken window in living room",
-    status: "Completed",
-    submissionDate: "2025-02-05 12:00:00",
-    completionDate: "2025-02-06 14:30:00",
-  },
-];
+const API_URL =
+  "http://classwork.engr.oregonstate.edu:4994/maintenance_requests/";
 
 const MaintenanceRequests = () => {
-  const [requests, setRequests] = useState(initialRequests);
+  const [requests, setRequests] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingRequest, setEditingRequest] = useState(null);
 
+  // Updated fields: unitID, tenantID, description, status, submissionDate, completionDate
   const maintenanceFields = [
     { name: "description", label: "Description", type: "text", required: true },
     { name: "status", label: "Status", type: "text", required: true },
     {
       name: "submissionDate",
       label: "Submission Date",
-      type: "text",
+      type: "date",
       required: true,
     },
     {
       name: "completionDate",
       label: "Completion Date",
-      type: "text",
+      type: "date",
       required: false,
     },
   ];
 
-  const handleAddOrUpdateRequest = (formData) => {
-    if (editingRequest) {
-      setRequests(
-        requests.map((req) =>
-          req.requestID === editingRequest.requestID
-            ? { ...req, ...formData }
-            : req
-        )
-      );
-    } else {
-      const newRequest = { requestID: Date.now(), ...formData };
-      setRequests([...requests, newRequest]);
+  const fetchRequests = async () => {
+    try {
+      const response = await axios.get(API_URL);
+      setRequests(response.data);
+    } catch (error) {
+      console.error("Error fetching maintenance requests:", error);
     }
-    setShowModal(false);
-    setEditingRequest(null);
+  };
+
+  useEffect(() => {
+    fetchRequests();
+  }, []);
+
+  const handleAddOrUpdateRequest = async (formData) => {
+    try {
+      if (editingRequest) {
+        await axios.put(`${API_URL}${editingRequest.requestID}`, formData);
+      } else {
+        await axios.post(API_URL, formData);
+      }
+      setShowModal(false);
+      setEditingRequest(null);
+      fetchRequests();
+    } catch (error) {
+      console.error("Error saving maintenance request:", error);
+    }
   };
 
   const handleEditRequest = (request) => {
@@ -63,8 +62,13 @@ const MaintenanceRequests = () => {
     setShowModal(true);
   };
 
-  const handleDeleteRequest = (id) => {
-    setRequests(requests.filter((req) => req.requestID !== id));
+  const handleDeleteRequest = async (requestID) => {
+    try {
+      await axios.delete(`${API_URL}${requestID}`);
+      fetchRequests();
+    } catch (error) {
+      console.error("Error deleting maintenance request:", error);
+    }
   };
 
   return (
@@ -79,18 +83,14 @@ const MaintenanceRequests = () => {
       >
         Add Request
       </button>
-
       <Modal isOpen={showModal} onClose={() => setShowModal(false)}>
-        <h2 style={{ marginBottom: "10px" }}>
-          {editingRequest ? "Edit Request" : "New Maintenance Request"}
-        </h2>
+        <h2>{editingRequest ? "Edit Request" : "New Maintenance Request"}</h2>
         <UniversalForm
           fields={maintenanceFields}
           onSubmit={handleAddOrUpdateRequest}
           initialData={editingRequest}
         />
       </Modal>
-
       <table className="table">
         <thead>
           <tr>
@@ -109,7 +109,7 @@ const MaintenanceRequests = () => {
               <td>{req.description}</td>
               <td>{req.status}</td>
               <td>{req.submissionDate}</td>
-              <td>{req.completionDate || "N/A"}</td>
+              <td>{req.completionDate}</td>
               <td>
                 <button
                   className="edit-button"

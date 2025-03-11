@@ -1,54 +1,51 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import Modal from "../common/Modal";
 import UniversalForm from "../common/UniversalForm";
 
-const initialLeases = [
-  {
-    leaseID: 1,
-    unitID: 101,
-    tenantID: 1,
-    startDate: "2025-01-01",
-    endDate: "2025-12-31",
-    rentPrice: 1500,
-  },
-  {
-    leaseID: 2,
-    unitID: 102,
-    tenantID: 2,
-    startDate: "2025-02-01",
-    endDate: "2026-01-31",
-    rentPrice: 1700,
-  },
-];
+const API_URL = "http://classwork.engr.oregonstate.edu:4994/leases/";
 
 const Leases = () => {
-  const [leases, setLeases] = useState(initialLeases);
+  const [leases, setLeases] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingLease, setEditingLease] = useState(null);
 
+  // Fields now match backend: unitID, tenantID, startDate, endDate, rent
   const leaseFields = [
     { name: "unitID", label: "Unit ID", type: "number", required: true },
     { name: "tenantID", label: "Tenant ID", type: "number", required: true },
     { name: "startDate", label: "Start Date", type: "date", required: true },
     { name: "endDate", label: "End Date", type: "date", required: true },
-    { name: "rentPrice", label: "Rent Price", type: "number", required: true },
+    { name: "rentPrice", label: "Rent", type: "number", required: true },
   ];
 
-  const handleAddOrUpdateLease = (formData) => {
-    if (editingLease) {
-      setLeases(
-        leases.map((lease) =>
-          lease.leaseID === editingLease.leaseID
-            ? { ...lease, ...formData }
-            : lease
-        )
-      );
-    } else {
-      const newLease = { leaseID: Date.now(), ...formData };
-      setLeases([...leases, newLease]);
+  const fetchLeases = async () => {
+    try {
+      const response = await axios.get(API_URL);
+      setLeases(response.data);
+    } catch (error) {
+      console.error("Error fetching leases:", error);
     }
-    setShowModal(false);
-    setEditingLease(null);
+  };
+
+  useEffect(() => {
+    fetchLeases();
+  }, []);
+
+  const handleAddOrUpdateLease = async (formData) => {
+    try {
+      console.log(API_URL, formData);
+      if (editingLease) {
+        await axios.put(`${API_URL}${editingLease.leaseID}`, formData);
+      } else {
+        await axios.post(API_URL, formData);
+      }
+      setShowModal(false);
+      setEditingLease(null);
+      fetchLeases();
+    } catch (error) {
+      console.error("Error saving lease:", error);
+    }
   };
 
   const handleEditLease = (lease) => {
@@ -56,8 +53,13 @@ const Leases = () => {
     setShowModal(true);
   };
 
-  const handleDeleteLease = (id) => {
-    setLeases(leases.filter((lease) => lease.leaseID !== id));
+  const handleDeleteLease = async (leaseID) => {
+    try {
+      await axios.delete(`${API_URL}${leaseID}`);
+      fetchLeases();
+    } catch (error) {
+      console.error("Error deleting lease:", error);
+    }
   };
 
   return (
@@ -88,7 +90,7 @@ const Leases = () => {
             <th>Tenant ID</th>
             <th>Start Date</th>
             <th>End Date</th>
-            <th>Rent Price</th>
+            <th>Rent</th>
             <th>Actions</th>
           </tr>
         </thead>
